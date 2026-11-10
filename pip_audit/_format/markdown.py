@@ -4,6 +4,7 @@ Functionality for formatting vulnerability results as a Markdown table.
 
 from __future__ import annotations
 
+import re
 from textwrap import dedent
 from typing import cast
 
@@ -121,7 +122,9 @@ class MarkdownFormat(VulnerabilityFormat):
             linked_aliases = ", ".join(_md_link(a, vuln_id_url(a)) for a in vuln.aliases)
             vuln_text += f" | {linked_aliases}"
         if self.output_desc:
-            vuln_text += f" | {vuln.description}"
+            # Preserve existing Markdown escapes when escaping table separators.
+            description = re.sub(r"(?<!\\)\|", r"\\|", vuln.description)
+            vuln_text += f" | {description}"
         return vuln_text
 
     def _format_fix_versions(self, fix_versions: list[Version]) -> str:

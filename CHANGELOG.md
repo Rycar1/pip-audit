@@ -10,6 +10,9 @@ All versions prior to 0.0.9 are untracked.
 
 ### Fixed
 
+* Escape unescaped pipes in Markdown vulnerability descriptions to avoid
+  truncating their contents when rendered as table cells.
+
 * Editable requirements skipped with `--skip-editable` no longer require a hash
   when auditing hashed requirements files
   ([#1024](https://github.com/pypa/pip-audit/issues/1024))

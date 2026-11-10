@@ -1,6 +1,8 @@
 import pytest
+from packaging.version import Version
 
 import pip_audit._format as format
+import pip_audit._service as service
 from pip_audit._format.interface import pypi_url, vuln_id_url
 from pip_audit._format.markdown import _md_link
 
@@ -40,6 +42,33 @@ Name | Version | ID | Fix Versions | Aliases
 {_P("foo")} | 1.0 | {_V("VULN-1")} | 1.0 | {_V("CVE-0000-00001")}
 {_P("bar")} | 0.1 | {_V("VULN-2")} |  | {_V("CVE-0000-00002")}"""
     assert markdown_format.format(vuln_data, []) == expected_markdown
+
+
+@pytest.mark.parametrize(
+    "description, expected_description",
+    [
+        ("left | right", r"left \| right"),
+        ("left || right", r"left \|\| right"),
+        ("`left | right`", r"`left \| right`"),
+        (r"left \| right", r"left \| right"),
+        (r"left \\| right", r"left \\| right"),
+        (r"left \\\| right", r"left \\\| right"),
+        (r"left \| middle | right", r"left \| middle \| right"),
+        (r"\*literal\* | right", r"\*literal\* \| right"),
+    ],
+)
+def test_markdown_description_pipes(description, expected_description):
+    dep = service.ResolvedDependency(name="foo", version=Version("1.0"))
+    vuln = service.VulnerabilityResult(
+        id="VULN-0", description=description, fix_versions=[], aliases=set()
+    )
+    markdown_format = format.MarkdownFormat(True, False)
+    expected_markdown = f"""
+Name | Version | ID | Fix Versions | Description
+--- | --- | --- | --- | ---
+{_P("foo")} | 1.0 | {_V("VULN-0")} |  | {expected_description}"""
+    assert markdown_format.format({dep: [vuln]}, []) == expected_markdown
+    assert vuln.description == description
 
 
 def test_markdown_no_desc_no_aliases(vuln_data):
